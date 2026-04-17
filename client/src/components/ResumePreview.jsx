@@ -39,7 +39,7 @@ const ResumePreview = (props) => {
   };
 
   return (
-    <div className="w-full bg-gray-100">
+    <div className="w-full bg-cc-bg/50 rounded-lg">
       <div
         id="resume-preview"
         className={

@@ -1,151 +1,179 @@
-import ai from "../configs/ai.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import Resume from "../models/Resume.js";
 
-// controller for enhancing a resume's professional summary
-// POST: /api/ai/enhance-pro-sum
-export const enhanceProfessionalSummary = async (req, res) => {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// helper to get model
+const getModel = () => {
+  return genAI.getGenerativeModel({
+    model: "gemini-1.5-flash-latest",
+  });
+};
+
+// helper to safely parse JSON
+const parseJSON = (text) => {
   try {
-    const { userContent } = req.body;
-
-    if (!userContent) {
-      return res.status(404).json({ message: "Missing required fields" });
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start !== -1 && end !== -1) {
+      return JSON.parse(text.slice(start, end + 1));
     }
-
-    const response = await ai.chat.completions.create({
-      model: process.env.OPENAI_MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert in resume writing. Your task is to enhance the professional summary of a resume. The summary should be 1-2 sentences also highlighting key skills, experience, and career objectives. Make it compelling and ATS-friendly. and only return text no options or anything else.",
-        },
-        {
-          role: "user",
-          content: userContent,
-        },
-      ],
-    });
-
-    const enhancedContent = response.choices[0].message.content;
-    return res.status(200).json({ enhancedContent });
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
+    throw new Error("Invalid JSON from AI");
   }
 };
 
-// controller for enhancing a resume's job description
-// POST: /api/ai/enhance-pro-sum
-export const enhanceJobDescription = async (req, res) => {
-  try {
-    const { userContent } = req.body;
+// convert resume to text
+const resumeToText = (resume) => {
+  let text = "";
 
-    if (!userContent) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+  if (resume.personal_info?.full_name)
+    text += `Name: ${resume.personal_info.full_name}\n`;
 
-    const response = await ai.chat.completions.create({
-      model: process.env.OPENAI_MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert in resume writing. Your task is to enhance the job description of a resume. The job description should be only 1-2 sentences also highlighting key responsibilities and achievements. Use action verbs and quantifiable results where possible. Make it ATS-friendly. and only return text no options or anything else.",
-        },
-        {
-          role: "user",
-          content: userContent,
-        },
-      ],
-    });
+  if (resume.skills?.length)
+    text += `Skills: ${resume.skills.join(", ")}\n`;
 
-    const enhancedContent = response.choices[0].message.content;
-    return res.status(200).json({ enhancedContent });
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
+  if (resume.professional_summary)
+    text += `Summary: ${resume.professional_summary}\n`;
+
+  (resume.experience || []).forEach((exp) => {
+    text += `Worked as ${exp.position} at ${exp.company}\n`;
+  });
+
+  return text;
 };
 
-// controller for uploading a resume to the database
-// POST: /api/ai/upload-resume
-export const uploadResume = async (req, res) => {
+//////////////////////////////////////////////////////////////
+// 🔥 INTERVIEW PREP
+//////////////////////////////////////////////////////////////
+export const interviewPrep = async (req, res) => {
   try {
-    const { resumeText, title } = req.body;
+    const { resumeId } = req.body;
     const userId = req.userId;
 
-    if (!resumeText) {
-      return res.status(400).json({ message: "Missing required fields" });
+    const resume = await Resume.findOne({ _id: resumeId, userId });
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
     }
 
-    const systemPrompt =
-      "You are an expert AI agent to extract date from resume.";
+    const model = getModel();
+    const resumeText = resumeToText(resume);
 
-    const userPrompt = `extract data from this resume ${resumeText} Provide data in the following JSON format with no additional text before or after: 
-      {
-        professional_summary: { type: String, default: "" },
-        skills: [{ type: String }],
-        personal_info: {
-          image: { type: String, default: "" },
-          full_name: { type: String, default: "" },
-          profession: { type: String, default: "" },
-          email: { type: String, default: "" },
-          phone: { type: String, default: "" },
-          location: { type: String, default: "" },
-          linkedin: { type: String, default: "" },
-          github: { type: String, default: "" },
-          website: { type: String, default: "" },
-        },
-        experience: [
-          {
-            company: { type: String },
-            position: { type: String },
-            start_date: { type: String },
-            end_date: { type: String },
-            description: { type: String },
-            is_current: { type: Boolean },
-          },
-        ],
-        project: [
-          {
-            name: { type: String },
-            type: { type: String },
-            description: { type: String },
-          },
-        ],
-        experience: [
-          {
-            insitution: { type: String },
-            degree: { type: String },
-            field: { type: String },
-            graduation_date: { type: String },
-            gpa: { type: String },
-          },
-        ],
-      }
-    `;
+    const prompt = `
+Based on this resume:
+${resumeText}
 
-    const response = await ai.chat.completions.create({
-      model: process.env.OPENAI_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
+Generate:
+- 4 technical questions
+- 3 behavioral questions
+- 3 HR questions
 
-    const extractedData = response.choices[0].message.content;
+Return ONLY JSON like:
+{
+  "technical":[{"question":"","suggestedAnswer":""}],
+  "behavioral":[{"question":"","suggestedAnswer":""}],
+  "hr":[{"question":"","suggestedAnswer":""}]
+}
+`;
 
-    const parsedData = JSON.parse(extractedData);
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
-    const newResume = await Resume.create({ userId, title, ...parsedData });
+    const parsed = parseJSON(text);
 
-    return res.status(200).json({ resumeId: newResume._id });
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
+    res.json(parsed);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Error generating questions" });
+  }
+};
+
+//////////////////////////////////////////////////////////////
+// 🔥 ATS SCORE
+//////////////////////////////////////////////////////////////
+export const atsScoreCheck = async (req, res) => {
+  try {
+    const { resumeId, jobDescription } = req.body;
+    const userId = req.userId;
+
+    const resume = await Resume.findOne({ _id: resumeId, userId });
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+
+    const model = getModel();
+    const resumeText = resumeToText(resume);
+
+    const prompt = `
+Compare this resume with job description.
+
+Resume:
+${resumeText}
+
+Job Description:
+${jobDescription}
+
+Return JSON:
+{
+  "score": number,
+  "missingKeywords": [],
+  "summary": ""
+}
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    const parsed = parseJSON(text);
+
+    res.json(parsed);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "ATS check failed" });
+  }
+};
+
+//////////////////////////////////////////////////////////////
+// 🔥 RESUME ROAST
+//////////////////////////////////////////////////////////////
+export const resumeRoast = async (req, res) => {
+  try {
+    const { resumeId } = req.body;
+    const userId = req.userId;
+
+    const resume = await Resume.findOne({ _id: resumeId, userId });
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+
+    const model = getModel();
+    const resumeText = resumeToText(resume);
+
+    const prompt = `
+Roast this resume in a funny way and give 5 tips.
+
+Resume:
+${resumeText}
+
+Return JSON:
+{
+  "roast": "",
+  "tips": []
+}
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    const parsed = parseJSON(text);
+
+    res.json(parsed);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Roast failed" });
   }
 };

@@ -2,8 +2,21 @@
 
 @import "tailwindcss";
 
+@theme {
+  --color-cc-bg: #0a0f1e;
+  --color-cc-card: #111827;
+  --color-cc-accent: #7c3aed;
+  --color-cc-accent-light: #9f67ff;
+  --color-cc-text: #ffffff;
+}
+
 * {
   font-family: "Outfit", sans-serif;
+}
+
+body {
+  background-color: var(--color-cc-bg);
+  color: var(--color-cc-text);
 }
 
 @layer base {
@@ -12,10 +25,10 @@
   }
 
   input:not([type="checkbox"]) {
-    @apply outline-none focus:ring border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-lg text-gray-700
+    @apply outline-none focus:ring border border-white/15 focus:ring-cc-accent focus:border-cc-accent rounded-lg bg-cc-card text-cc-text placeholder:text-white/40;
   }
 
   textarea {
-    @apply outline-none focus:ring border border-gray-300 focus:ring-blue-500 focus:border-blue-500 resize-none
+    @apply outline-none focus:ring border border-white/15 focus:ring-cc-accent focus:border-cc-accent resize-none bg-cc-card text-cc-text placeholder:text-white/40 rounded-lg;
   }
 }

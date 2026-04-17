@@ -1,18 +1,20 @@
+import { Link } from "react-router-dom";
+
 const CallToAction = () => {
   return (
     <div
       id="cta"
-      className="border-y border-dashed border-slate-200 w-full max-w-5xl mx-auto px-10 sm:px-16 mt-28"
+      className="border-y border-dashed border-white/15 w-full max-w-5xl mx-auto px-10 sm:px-16 mt-28"
     >
-      <div className="flex flex-col md:flex-row text-center md:text-left items-center justify-between gap-8 px-3 md:px-10 border-x border-dashed border-slate-200 py-16 sm:py-20 -mt-10 -mb-10 w-full">
-        <p className="text-xl font-medium max-w-md text-slate-800">
-          Build a Professional Resume That Helps You Stand Out and Get Hired
+      <div className="flex flex-col md:flex-row text-center md:text-left items-center justify-between gap-8 px-3 md:px-10 border-x border-dashed border-white/15 py-16 sm:py-20 -mt-10 -mb-10 w-full">
+        <p className="text-xl font-medium max-w-md text-white">
+          Build a resume that gets past ATS and into interviews with CareerCraft.
         </p>
-        <a
-          href="https://prebuiltui.com"
-          className="flex items-center gap-2 rounded py-3 px-8 bg-green-600 hover:bg-green-700 transition text-white"
+        <Link
+          to="/app"
+          className="flex items-center gap-2 rounded py-3 px-8 bg-cc-accent hover:bg-cc-accent-light transition text-white font-medium"
         >
-          <span>Get Started</span>
+          <span>Get started</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -28,7 +30,7 @@ const CallToAction = () => {
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
           </svg>
-        </a>
+        </Link>
       </div>
     </div>
   );

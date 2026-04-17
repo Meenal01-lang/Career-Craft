@@ -1,7 +1,7 @@
-# AI Resume Builder
+# CareerCraft
 
-**AI-powered resume builder built with React, Vite & Express**  
-Create, customise and download professional-looking CVs in just a few minutes.
+**AI-powered resume and career toolkit built with React, Vite & Express**  
+Create, customise and download professional-looking CVs—with ATS checks, analytics, and interview prep.
 
 ## 🚀 Live Demo  
 [Visit the app](https://ai-resume-builder-iota-one.vercel.app)

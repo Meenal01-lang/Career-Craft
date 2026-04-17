@@ -56,6 +56,9 @@ const ResumeSchema = new mongoose.Schema(
         credential_url: { type: String },
       },
     ],
+    source_pdf_url: { type: String, default: "" },
+    viewCount: { type: Number, default: 0 },
+    downloadCount: { type: Number, default: 0 },
   },
   { timestamps: true, minimize: false }
 );

@@ -1,15 +1,17 @@
 import express from "express";
 import protect from "../middlewares/authMiddleware.js";
+
 import {
-  enhanceJobDescription,
-  enhanceProfessionalSummary,
-  uploadResume,
+  atsScoreCheck,
+  interviewPrep,
+  resumeRoast,
 } from "../controllers/aiController.js";
 
 const aiRouter = express.Router();
 
-aiRouter.post("/enhance-pro-sum", protect, enhanceProfessionalSummary);
-aiRouter.post("/enhance-job-desc", protect, enhanceJobDescription);
-aiRouter.post("/upload-resume", protect, uploadResume);
+// Only keep working routes
+aiRouter.post("/ats-check", protect, atsScoreCheck);
+aiRouter.post("/resume-roast", protect, resumeRoast);
+aiRouter.post("/interview-prep", protect, interviewPrep);
 
 export default aiRouter;

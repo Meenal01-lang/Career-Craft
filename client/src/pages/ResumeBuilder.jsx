@@ -109,7 +109,16 @@ const ResumeBuilder = () => {
     }
   };
 
-  const downloadResume = () => {
+  const downloadResume = async () => {
+    try {
+      await api.post(
+        `/api/resumes/track-download/${resumeId}`,
+        {},
+        { headers: { Authorization: token } }
+      );
+    } catch {
+      /* still allow print */
+    }
     window.print();
   };
 
@@ -149,7 +158,7 @@ const ResumeBuilder = () => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Link
           to="/app"
-          className="inline-flex gap-2 items-center text-slate-500 hover:text-slate-700 transition-all"
+          className="inline-flex gap-2 items-center text-white/60 hover:text-cc-accent-light transition-all"
         >
           <ArrowLeftIcon className="size-4" /> Back to Dashboard
         </Link>
@@ -159,12 +168,12 @@ const ResumeBuilder = () => {
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Panel - Form */}
           <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 pt-1">
+            <div className="bg-cc-card rounded-lg shadow-sm border border-white/10 p-6 pt-1 text-white">
               {/* Progress bar using activeSectionIndex */}
 
-              <hr className="absolute top-0 left-0 right-0 border-2 border-gray-200" />
+              <hr className="absolute top-0 left-0 right-0 border-2 border-white/10" />
               <hr
-                className="absolute top-0 left-0 h-1 bg-linear-to-br from-green-500 to-green-600 border-none transition-all duration-2000"
+                className="absolute top-0 left-0 h-1 bg-linear-to-br from-cc-accent to-cc-accent-light border-none transition-all duration-2000"
                 style={{
                   width: `${
                     (activeSectionIndex * 100) / (sections.length - 1)
@@ -173,7 +182,7 @@ const ResumeBuilder = () => {
               />
 
               {/* Section Navigation */}
-              <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
+              <div className="flex justify-between items-center mb-6 border-b border-white/10 py-1">
                 <div className="flex items-center gap-2">
                   <TemplateSelector
                     selectedTemplate={resumeData.template}
@@ -200,7 +209,7 @@ const ResumeBuilder = () => {
                           Math.max(prevIndex - 1, 0)
                         )
                       }
-                      className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+                      className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-white/70 hover:bg-white/5 transition-all"
                       disabled={activeSectionIndex === 0}
                     >
                       <ChevronLeft className="size-4" /> Previous
@@ -212,7 +221,7 @@ const ResumeBuilder = () => {
                         Math.min(prevIndex + 1, sections.length - 1)
                       )
                     }
-                    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all ${
+                    className={`flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-white/70 hover:bg-white/5 transition-all ${
                       activeSectionIndex === sections.length - 1 && "opacity-50"
                     }`}
                     disabled={activeSectionIndex === sections.length - 1}
@@ -311,7 +320,7 @@ const ResumeBuilder = () => {
                 onClick={() => {
                   toast.promise(saveResume, { loading: "Saving..." });
                 }}
-                className="bg-linear-to-br from-green-100 to-green-200 ring-green-300 text-green-600 ring hover:ring-green-400 transition-all rounded-md px-6 py-2 mt-6 text-sm"
+                className="bg-cc-accent/20 ring-cc-accent/50 text-cc-accent-light ring hover:ring-cc-accent transition-all rounded-md px-6 py-2 mt-6 text-sm"
               >
                 Save Changes
               </button>
@@ -325,7 +334,7 @@ const ResumeBuilder = () => {
                 {resumeData.public && (
                   <button
                     onClick={handleShare}
-                    className="flex items-center p-2 px-4 gap-2 text-xs bg-linear-to-br from-blue-100 to to-blue-200 text-blue-600 rounded-lg ring-blue-300 hover:ring transition-colors"
+                    className="flex items-center p-2 px-4 gap-2 text-xs bg-white/10 text-cc-accent-light rounded-lg border border-white/15 hover:bg-white/15 transition-colors"
                   >
                     <Share2Icon className="size-4" /> Share
                   </button>
@@ -333,7 +342,7 @@ const ResumeBuilder = () => {
 
                 <button
                   onClick={changeResumeVisibility}
-                  className="flex items-center p-2 px-4 gap-2 text-xs bg-linear-to-br from-purple-100 to-purple-200 text-purple-600 ring-purple-300 rounded-lg hover:ring transition-colors"
+                  className="flex items-center p-2 px-4 gap-2 text-xs bg-cc-accent/25 text-cc-accent-light border border-cc-accent/40 rounded-lg hover:bg-cc-accent/35 transition-colors"
                 >
                   {resumeData.public ? (
                     <EyeIcon className="size-4" />
@@ -345,7 +354,7 @@ const ResumeBuilder = () => {
 
                 <button
                   onClick={downloadResume}
-                  className="flex items-center p-2 px-6 gap-2 text-xs bg-linear-to-br from-green-100 to-green-200 text-green-600 ring-green-300 rounded-lg hover:ring transition-colors"
+                  className="flex items-center p-2 px-6 gap-2 text-xs bg-cc-accent/30 text-white border border-cc-accent/50 rounded-lg hover:bg-cc-accent/45 transition-colors"
                 >
                   <DownloadIcon className="size-4" /> Download
                 </button>

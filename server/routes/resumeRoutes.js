@@ -5,6 +5,8 @@ import {
   deleteResume,
   getPublicResumeById,
   getResumeById,
+  trackResumeDownload,
+  trackResumeView,
   updateResume,
 } from "../controllers/resumeController.js";
 import upload from "../configs/multer.js";
@@ -15,6 +17,8 @@ resumeRouter.post("/create", protect, createResume);
 resumeRouter.put("/update", upload.single("image"), protect, updateResume);
 resumeRouter.delete("/delete/:resumeId", protect, deleteResume);
 resumeRouter.get("/get/:resumeId", protect, getResumeById);
+resumeRouter.post("/public/:resumeId/view", trackResumeView);
 resumeRouter.get("/public/:resumeId", getPublicResumeById);
+resumeRouter.post("/track-download/:resumeId", protect, trackResumeDownload);
 
 export default resumeRouter;

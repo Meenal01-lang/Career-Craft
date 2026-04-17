@@ -64,7 +64,11 @@ export const getPublicResumeById = async (req, res) => {
   try {
     const { resumeId } = req.params;
 
-    const resume = await Resume.findOne({ public: true, _id: resumeId });
+    const resume = await Resume.findOneAndUpdate(
+      { public: true, _id: resumeId },
+      { $inc: { viewCount: 1 } },
+      { new: true }
+    );
 
     if (!resume) {
       return res.status(404).json({ message: "Resume not found" });
@@ -92,6 +96,15 @@ export const updateResume = async (req, res) => {
       resumeDataCopy = structuredClone(resumeData);
     }
 
+    // Never allow client to overwrite immutable/owned fields
+    delete resumeDataCopy._id;
+    delete resumeDataCopy.userId;
+    delete resumeDataCopy.createdAt;
+    delete resumeDataCopy.updatedAt;
+    delete resumeDataCopy.__v;
+    delete resumeDataCopy.viewCount;
+    delete resumeDataCopy.downloadCount;
+
     if (image) {
       const imageBufferData = fs.createReadStream(image.path);
 
@@ -110,11 +123,58 @@ export const updateResume = async (req, res) => {
 
     const resume = await Resume.findOneAndUpdate(
       { userId, _id: resumeId },
-      resumeDataCopy,
+      { $set: resumeDataCopy },
       { new: true }
     );
 
+    if (image?.path) {
+      fs.promises.unlink(image.path).catch(() => {});
+    }
+
     return res.status(200).json({ message: "Saved successfully", resume });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// POST: /api/resumes/public/:resumeId/view — increment public resume views
+export const trackResumeView = async (req, res) => {
+  try {
+    const { resumeId } = req.params;
+
+    const resume = await Resume.findOneAndUpdate(
+      { _id: resumeId, public: true },
+      { $inc: { viewCount: 1 } },
+      { new: true }
+    );
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found or not public" });
+    }
+
+    return res.status(200).json({ viewCount: resume.viewCount });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// POST: /api/resumes/track-download/:resumeId — owner download count
+export const trackResumeDownload = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { resumeId } = req.params;
+
+    const resume = await Resume.findOneAndUpdate(
+      { userId, _id: resumeId },
+      { $inc: { downloadCount: 1 } },
+      { new: true }
+    );
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+
+    return res.status(200).json({ downloadCount: resume.downloadCount });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
